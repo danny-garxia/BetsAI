@@ -4,7 +4,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons'; // Assuming you are using Expo for icons
 import ProfileSett from '../screens/ProfileSett';
-import Friends from '../screens/Friends';
+import Community from '../screens/Community';
 import Message from '../screens/Message';
 import Post from '../screens/Post';
 import Home from '../screens/Home';
@@ -16,11 +16,11 @@ const AppNav = () => {
         <Tab.Navigator
             tabBarOptions={{
                 activeTintColor: '#cbae73',
-                inactiveTintColor: 'gray',
-                labelStyle: { display: 'none' }, // Hide the tab bar label
-
+                inactiveTintColor: 'black',
+                labelStyle: { display: 'none' }, // Hide the tab bar label,
+                
             }}
-        >
+            >
             <Tab.Screen
                 name="Home"
                 component={EncryptImage}
@@ -55,10 +55,10 @@ const AppNav = () => {
                 }}
             />
              <Tab.Screen
-                name="Friends"
-                component={Friends}
+                name="Community"
+                component={Community}
                 options={{
-                    tabBarLabel: 'Friends',
+                    tabBarLabel: 'Community',
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="people-outline" color={color} size={size} />
                     ),
