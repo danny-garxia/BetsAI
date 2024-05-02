@@ -40,14 +40,7 @@ function App() {
         </NavigationContainer>
     );
 }
-const InsideTabs = () => {
-    return (
-        <>
-            <AppNav /> {/* Render the bottom tab navigator */}
-            <TopTabs /> {/* Render the top tab navigator */}
-        </>
-    );
-};
+
 
 
 export default App;

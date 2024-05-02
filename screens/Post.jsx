@@ -19,6 +19,7 @@ const Post = () => {
     const [hours, setHours] = useState('');
     const [minutes, setMinutes] = useState('');
     const [userName, setUserName] = useState('');
+    const [encMessage, setEncMessage] = useState('');
 
     const navigation = useNavigation(); // Use useNavigation hook
 
@@ -103,23 +104,32 @@ const Post = () => {
             // Get the download URL of the uploaded image
             const downloadURL = await getDownloadURL(imageRef);
             console.log('Download URL:', downloadURL);
-    
+            const timestamp = Date.now();
+
             // Call writeUserData with all required parameters
-            writeUserData(userId, userName, years, days, hours, minutes, postName);
-        } catch (error) {
+            writeUserData(userId, userName, years, days, hours, minutes, postName,timestamp,encMessage);
+            setSelectedImage(null);
+            setYears('');
+            setDays('');
+            setHours('');
+            setMinutes('');
+            setEncMessage(''); } catch (error) {
             console.error('Error uploading image:', error);
         }
     };
     
 
-    const writeUserData = (userId, username, years, days, hours, minutes, postName) => {
+    const writeUserData = (userId, username, years, days, hours, minutes, postName,timestamp,encMessage) => {
         const userData = {
             username: username,
             years: years,
             days: days,
             hours: hours,
             minutes: minutes,
-            postName: postName // Include postName data in the userData object
+            postName: postName, // Include postName data in the userData object
+            userId: userId,
+            timestamp: timestamp,
+            encMessage: encMessage
         };
     
         // Set user data in the Firebase Realtime Database under the "posts" table
@@ -142,7 +152,7 @@ const Post = () => {
                         {selectedImage ? (
                             <Image source={{ uri: selectedImage }} style={{ width: 200, height: 200 }} />
                         ) : (
-                            <Text style={styles.buttonText}>Post</Text>
+                            <Text style={styles.buttonText}>Select Image Or Video For Time Capsule</Text>
                         )}
                     </TouchableOpacity>
                 </View>
@@ -150,6 +160,8 @@ const Post = () => {
                     <View style={styles.inputContainer}>
                         <TextInput
                             value={years}
+                            placeholderTextColor={'black'}
+                            fontWeight={'bold'}
                             style={styles.input}
                             placeholder="Years"
                             onChangeText={(text) => setYears(text)}
@@ -158,6 +170,8 @@ const Post = () => {
                         <TextInput
                             value={days}
                             style={styles.input}
+                            placeholderTextColor={'black'}
+                            fontWeight={'bold'}
                             placeholder="Days"
                             onChangeText={(text) => setDays(text)}
                             keyboardType="numeric"
@@ -166,22 +180,36 @@ const Post = () => {
                             value={hours}
                             style={styles.input}
                             placeholder="Hours"
+                            placeholderTextColor={'black'}
+                            fontWeight={'bold'}
                             onChangeText={(text) => setHours(text)}
                             keyboardType="numeric"
                         />
                         <TextInput
                             value={minutes}
                             style={styles.input}
+                            placeholderTextColor={'black'}
                             placeholder="Minutes"
                             onChangeText={(text) => setMinutes(text)}
                             keyboardType="numeric"
+                            fontWeight={'bold'}
                         />
                     </View>
                     <Text style={styles.buttonText}>Time</Text>
                 </View>
+                <View style={styles.button2}>
+                <TextInput 
+                style={styles.input}
+                     value={encMessage}
+                     placeholder="Create Hidden Message"
+                     placeholderTextColor={'black'}
+                     fontWeight={'bold'}
+                     onChangeText={(text)=>setEncMessage(text)}
+                       />
+                </View>
                 <View style={styles.button}>
                     <TouchableOpacity onPress={uploadImageToStorage}>
-                        <Text style={styles.buttonText}>Submit</Text>
+                        <Text style={styles.buttonText}>Send Capsule To Comunity </Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -200,19 +228,22 @@ const styles = StyleSheet.create({
     },
     button: {
         width: '80%',
+        marginTop: 10,
         padding: 10,
         alignItems: 'center',
-        borderRadius: 6,
-        backgroundColor: '#cbae73',
-        marginTop: 10
+        borderColor: 'black', 
+        borderWidth:3,
+        borderRadius:9,
+        backgroundColor: 'rgba(203, 174, 115, .7)',
     },
     button2: {
         marginTop: 10,
         width: '80%',
         padding: 10,
         alignItems: 'center',
-        borderRadius: 6,
-        backgroundColor: '#cbae73'
+        borderRadius: 9,
+        borderColor: '#cbae73', 
+        borderWidth: 4,
     },
     imageContainer: {
         alignItems: 'center', // Center the content horizontally
@@ -221,14 +252,15 @@ const styles = StyleSheet.create({
     },
     buttonWithImage: {
         backgroundColor: 'transparent', // No background color
-        paddingVertical: 10,
+        marginTop:-90,
         paddingHorizontal: 20,
-        borderRadius: 5
+        borderRadius: 5,
     },
     buttonText: {
+        textAlign:'center',
         fontWeight: 'bold',
         fontSize: 15,
-        color: '#fff'
+        color: 'black'
     },
     inputContainer: {
         flexDirection: 'row', // Change from 'column' to 'row'
@@ -237,7 +269,7 @@ const styles = StyleSheet.create({
     },
     input: {
         paddingHorizontal: 10,
-        marginRight: 10
+        marginRight: 10,
     }
 });
 export default Post;
