@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, Text, StyleSheet } from 'react-native';
+import { View, Image, Text, StyleSheet, Button } from 'react-native';
 import { ref, get } from 'firebase/database';
 import { ref as storageRef, getDownloadURL } from 'firebase/storage'; // Import storageRef and getDownloadURL from Firebase Storage
 import { FIREBASE_DB } from './fireBaseConfig';
 import { FIREBASE_STG } from './fireBaseConfig';
 import staticImage from './imgs/static.jpg';
 import { ScrollView } from 'react-native-gesture-handler';
+import { ALERT_TYPE, Dialog, AlertNotificationRoot, Toast } from 'react-native-alert-notification';
+
 
 const EncryptImage = () => {
   const [users, setUsers] = useState([]);
@@ -126,7 +128,21 @@ const renderUserImage = (user) => {
       <Text style={styles.message}>Capsule locked for {`${disMinutes}`} minutes | {`${disDays}`} days | {`${disHours}`} | {`${disRemainingDays}`} Days | {`${disYears}`}  Years</Text>
       </>
     );
-  } else {
+  } 
+  else if(currentTime === expirationTimestamp){
+    <Button
+    title={'Past Gifts '}
+    onPress={() =>
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: 'Past Gifts Capsule',
+        textBody: `${user.username} Capsule wil now open`,
+      })
+    }
+  />
+  }
+  
+  else {
     // Show the main image specified by the user
     const imageUrl = imageURL[`${user.userId}_${user.postName}`];
 

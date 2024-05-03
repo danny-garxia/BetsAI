@@ -3,6 +3,7 @@ import { View, Image, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ref, get } from 'firebase/database';
 import { FIREBASE_AUTH,FIREBASE_DB,FIREBASE_STG } from '../fireBaseConfig';
 import { ref as storageRef, getDownloadURL } from 'firebase/storage'; 
+import Message from './Message';
 import { ScrollView } from 'react-native-gesture-handler';
 
 const Community = () => {
@@ -84,8 +85,11 @@ const Community = () => {
           {/* Display images for each user */}
           {users.map(user => (
             <View key={user.userId} style={styles.userContainer}>
-              <TouchableOpacity style={styles.userTouchable}>
-                {imageURL[user.userId] ? (
+              <TouchableOpacity 
+              style={styles.userTouchable}
+            //   onPress={() => this.props.navigation.navigate('Message')}
+              >
+              {imageURL[user.userId] ? (
                   renderUserImage(user, imageURL[user.userId])
                 ) : (
                   <Text>No image found</Text>
@@ -114,7 +118,11 @@ const Community = () => {
         flexDirection: 'row', // Align children horizontally
         alignItems: 'center', // Center the content vertically
         marginVertical: 10, // Adjust as needed
-        width:'80%'
+        width:'80%',
+        borderColor:'rgb(203, 174, 115)',
+        borderWidth:3,
+        padding:10,
+        borderRadius:10
       },
       userTouchable: {
         flexDirection: 'row', // Align children horizontally
@@ -123,8 +131,8 @@ const Community = () => {
       },
      
     profilePicture: {
-      width: 55,
-      height: 55,
+      width: 60,
+      height: 60,
       borderRadius: 35,
       marginRight: 70,
       
