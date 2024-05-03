@@ -1,132 +1,142 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { ref, get, child } from 'firebase/database';
-import { FIREBASE_DB, FIREBASE_STG } from '../fireBaseConfig';
-import { getDownloadURL, ref as storageRef } from "firebase/storage";
+import { View, Image, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ref, get } from 'firebase/database';
+import { FIREBASE_AUTH,FIREBASE_DB,FIREBASE_STG } from '../fireBaseConfig';
+import { ref as storageRef, getDownloadURL } from 'firebase/storage'; 
+import { ScrollView } from 'react-native-gesture-handler';
 
 const Community = () => {
     const [users, setUsers] = useState([]);
+    const [imageURL, setImageURL] = useState({});
+  
     const db = FIREBASE_DB;
     const stg = FIREBASE_STG;
-    const currentUserID = "your_current_user_id"; // Replace "your_current_user_id" with the actual ID of the current user
-
     useEffect(() => {
-        fetchUserData();
-        fetchUserIDs();
+      fetchUserData();
     }, []);
-
-    const fetchUserData = async () => {
+  
+      const fetchUserData = async () => {
         try {
-            const usersRef = ref(db, 'users');
-            const usersSnapshot = await get(usersRef);
-            const usersList = [];
-            usersSnapshot.forEach((childSnapshot) => {
-                const userData = childSnapshot.val();
-                if (userData.userId !== currentUserID) { // Exclude the current user
-                    usersList.push(userData);
-                }
-            });
-            setUsers(usersList);
-        } catch (error) {
-            console.error('Error fetching user data:', error);
+          const usersList = await getUsersList();
+          setUsers(usersList);
+          await fetchAndSetImageURLs(usersList);
+            } catch (error) {
+          console.error('Error fetching user data:', error);
         }
-    };
+      };
+      
+      const getUsersList = async () => {
+        const usersRef = ref(db, 'posts');
+        const usersSnapshot = await get(usersRef);
+        const usersList = [];
+        usersSnapshot.forEach((childSnapshot) => {
+          const userData = childSnapshot.val();
+          usersList.push(userData);
+        });
+        return usersList;
+      };
+      const fetchAndSetImageURLs = async (usersList) => {
+        const imageUrls = {}; // Object to store image URLs   
+         await Promise.all(usersList.map(async (user) => {
+        const imageURL = await fetchUploadedImage(user.userId);
+         imageUrls[`${user.userId}`] = imageURL; // Store the imageURL directly in the imageUrls object
+         }));
+        usersList.forEach(user => {
+          setImageURL(imageUrls);
+        });
+      };
 
-    const fetchUserIDs = async () => {
-        try {
-            // Reference the location in the database where user IDs are stored
-            const userIDsRef = ref(FIREBASE_DB, 'userIDs');
-            // Get the data from the userIDsRef
-            const snapshot = await get(userIDsRef);
-            // Initialize an array to store user IDs
-            const userIDs = [];
-            // Iterate through the snapshot to extract user IDs
-            snapshot.forEach((childSnapshot) => {
-                // Push each user ID to the userIDs array
-                const userId = childSnapshot.key; // Assuming user IDs are stored as keys
-                if (userId !== currentUserID) { // Exclude the current user
-                    userIDs.push(userId);
-                    // Fetch profile image for the current user ID
-                    fetchProfileImage(userId);
-                }
-            });
-            // Return the array of user IDs
-            return userIDs;
-        } catch (error) {
-            console.error('Error fetching user IDs:', error);
-            return []; // Return an empty array in case of error
-        }
-    };
+  const fetchUploadedImage = async (userId) => {
+    try {
+      const imagePath = `profile_pics/${userId}_profile_image`;
+      const jpgImageRef = storageRef(stg, `${imagePath}.jpg`);
+      const pngImageRef = storageRef(stg, `${imagePath}.png`);
+  
+      const [jpgDownloadURL, pngDownloadURL] = await Promise.all([
+        getDownloadURL(jpgImageRef).catch(error => null),
+        getDownloadURL(pngImageRef).catch(error => null)
+      ]);
 
-    const fetchProfileImage = async (userID) => {
-        try {
-            // Construct the imrage name based on the userId
-            const imageName = `${userID}_profile_image`;
-            // Check for both JPG and PNG extensions
-            const jpgImageRef = storageRef(stg, `profile_pics/${imageName}.jpg`);
-            const pngImageRef = storageRef(stg, `profile_pics/${imageName}.png`);
-console.log(`User Id is ${userID}`)
-            try {
-                const jpgDownloadURL = await getDownloadURL(jpgImageRef);
-                return jpgDownloadURL; // Return the download URL if JPG image is found
-            } catch (jpgError) {
-                try {
-                    const pngDownloadURL = await getDownloadURL(pngImageRef);
-                    return pngDownloadURL; // Return the download URL if PNG image is found
-                } catch (pngError) {
-                    console.error('Error fetching profile image: Image not found for the user.');
-                    return null; // Return null if neither JPG nor PNG image is found
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching profile image:', error);
-            return null; // Return null in case of any error
-        }
-    };
-
-    const renderUserItem = ({ item }) => (
-        <TouchableOpacity style={styles.userItem}>
-            <Image source={{ uri: item.profile_picture_url }} style={styles.profilePicture} />
-            <Text style={styles.username}>{item.username}</Text>
-        </TouchableOpacity>
-    );
-
-    return (
+      return jpgDownloadURL || pngDownloadURL; // Return the first available URL
+    } catch (error) {
+      console.error('Error fetching post image:', error);
+      return null;
+    }
+  };
+  
+  const renderUserImage = (user) => {
+      const imageUrl = imageURL[`${user.userId}`];
+      if (imageUrl) {
+        return (
+          <>
+            <Image source={{ uri: imageUrl }} style={styles.profilePicture} />
+          </>
+        );
+      } else {
+        return <Text>No image found</Text>;
+      }
+    
+  };
+    
+      return (
+        <ScrollView style={styles.scrollView}>
         <View style={styles.container}>
-            <FlatList
-                data={users}
-                renderItem={renderUserItem}
-                keyExtractor={(item) => item.userId} // Use a unique identifier for each user
-                ListEmptyComponent={<Text>No users found</Text>}
-            />
-        </View>
-    );
-};
+          {/* Display images for each user */}
+          {users.map(user => (
+            <View key={user.userId} style={styles.userContainer}>
+              <TouchableOpacity style={styles.userTouchable}>
+                {imageURL[user.userId] ? (
+                  renderUserImage(user, imageURL[user.userId])
+                ) : (
+                  <Text>No image found</Text>
+                )}
+                <Text style={styles.username}>{user.username}</Text>
 
-const styles = StyleSheet.create({
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+      
+      );
+    };
+  
+  const styles = StyleSheet.create({
+    scrollView: {
+    backgroundColor:'white',
+      flex: 1,
+    },
     container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+      flex:1,
+      alignItems: 'center',
     },
-    userItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
-    },
+    userContainer: {
+        flexDirection: 'row', // Align children horizontally
+        alignItems: 'center', // Center the content vertically
+        marginVertical: 10, // Adjust as needed
+        width:'80%'
+      },
+      userTouchable: {
+        flexDirection: 'row', // Align children horizontally
+        alignItems: 'center', // Center the content vertically
+
+      },
+     
     profilePicture: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        marginRight: 20,
+      width: 55,
+      height: 55,
+      borderRadius: 35,
+      marginRight: 70,
+      
     },
     username: {
-        fontSize: 18,
-        fontWeight: 'bold',
+      textAlign: 'left',
+      fontSize: 24,
+      fontWeight: 'bold',
+      margin: 15
     },
-});
+  
+   
+  });
 
 export default Community;
