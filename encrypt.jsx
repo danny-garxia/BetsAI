@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, Text, StyleSheet } from 'react-native';
+import { View, Image, Text, StyleSheet, Button } from 'react-native';
 import { ref, get } from 'firebase/database';
 import { ref as storageRef, getDownloadURL } from 'firebase/storage'; // Import storageRef and getDownloadURL from Firebase Storage
 import { FIREBASE_DB } from './fireBaseConfig';
 import { FIREBASE_STG } from './fireBaseConfig';
 import staticImage from './imgs/static.jpg';
 import { ScrollView } from 'react-native-gesture-handler';
+import { ALERT_TYPE, Dialog, AlertNotificationRoot, Toast } from 'react-native-alert-notification';
+
 
 const EncryptImage = () => {
   const [users, setUsers] = useState([]);
@@ -32,14 +34,11 @@ const EncryptImage = () => {
       try {
         const usersList = await getUsersList();
         setUsers(usersList);
-        console.log(users);
         await fetchAndSetImageURLs(usersList);
           } catch (error) {
         console.error('Error fetching user data:', error);
       }
     };
-
-  
     
     const getUsersList = async () => {
       const usersRef = ref(FIREBASE_DB, 'posts');
@@ -57,7 +56,6 @@ const EncryptImage = () => {
        await Promise.all(usersList.map(async (user) => {
       const imageURL = await fetchUploadedImage(user.userId, user.postName);
        imageUrls[`${user.userId}_${user.postName}`] = imageURL; // Store the imageURL directly in the imageUrls object
-       console.log(`fetchedImageURL ${imageURL}`);
        }));
     
 
@@ -95,8 +93,6 @@ const fetchUploadedImage = async (userId, postName) => {
       durationMilliseconds += hours * 60 * 60 * 1000; // Convert hours to milliseconds
       durationMilliseconds += days * 24 * 60 * 60 * 1000; // Convert days to milliseconds
       durationMilliseconds += years * 365 * 24 * 60 * 60 * 1000; // Convert years to milliseconds
-      console.log(timestamp);
-      console.log(`userID${userId}duration ${durationMilliseconds}`);
       const expirationTimestamp = durationMilliseconds;
       return expirationTimestamp;
     };
@@ -108,26 +104,23 @@ const fetchUploadedImage = async (userId, postName) => {
 const renderUserImage = (user) => {
   const currentTime = new Date().getTime();
   const expirationTimestamp = user.timestamp + generateEncryptionKey(user.userId, user.minutes, user.hours, user.days, user.years);
-  console.log(`expirationTimestamp ${expirationTimestamp}`);
-  console.log(`currentTime ${currentTime}`);
 
   const displayTime = expirationTimestamp-currentTime;
   // Convert milliseconds to minutes
-const disMinutes = Math.floor(displayTime / (1000 * 60));
+    const disMinutes = Math.floor(displayTime / (1000 * 60));
 
-// Convert milliseconds to days
-const disDays = Math.floor(displayTime / (1000 * 60 * 60 * 24));
+    // Convert milliseconds to days
+    const disDays = Math.floor(displayTime / (1000 * 60 * 60 * 24));
 
-const disHours = Math.floor(displayTime / (1000 * 60 * 60));
+    const disHours = Math.floor(displayTime / (1000 * 60 * 60));
 
-// Convert milliseconds to years
-const disYears = Math.floor(disDays / 365);
+    // Convert milliseconds to years
+    const disYears = Math.floor(disDays / 365);
 
-// Calculate remaining days after subtracting years
-const disRemainingDays = disDays % 365;
+    // Calculate remaining days after subtracting years
+    const disRemainingDays = disDays % 365;
 
-  console.log(`display time ${displayTime}`)
-  if (currentTime <= expirationTimestamp) {
+  if (currentTime < expirationTimestamp) {
     // Show the default image for the user
     return (
       <>
@@ -135,10 +128,23 @@ const disRemainingDays = disDays % 365;
       <Text style={styles.message}>Capsule locked for {`${disMinutes}`} minutes | {`${disDays}`} days | {`${disHours}`} | {`${disRemainingDays}`} Days | {`${disYears}`}  Years</Text>
       </>
     );
-  } else {
+  } 
+  else if(currentTime === expirationTimestamp){
+    <Button
+    title={'Past Gifts '}
+    onPress={() =>
+      Toast.show({
+        type: ALERT_TYPE.SUCCESS,
+        title: 'Past Gifts Capsule',
+        textBody: `${user.username} Capsule wil now open`,
+      })
+    }
+  />
+  }
+  
+  else {
     // Show the main image specified by the user
     const imageUrl = imageURL[`${user.userId}_${user.postName}`];
-    console.log(`imageUrl: ${imageUrl}`);
 
     if (imageUrl) {
       return (

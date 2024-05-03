@@ -4,11 +4,11 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons'; // Assuming you are using Expo for icons
 import ProfileSett from '../screens/ProfileSett';
-import Community from '../screens/Community';
 import Post from '../screens/Post';
 import Home from '../screens/Home';
 import EncryptImage from '../encrypt';
 import Message from '../screens/Message';
+import Community from '../screens/Community';
 const Tab = createBottomTabNavigator();
 
 const AppNav = () => {
