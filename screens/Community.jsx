@@ -58,14 +58,14 @@ const Community = () => {
         }
     };
 
-    const fetchProfileImage = async (userId) => {
+    const fetchProfileImage = async (userID) => {
         try {
-            // Construct the image name based on the userId
-            const imageName = `${userId}_profile_image`;
+            // Construct the imrage name based on the userId
+            const imageName = `${userID}_profile_image`;
             // Check for both JPG and PNG extensions
             const jpgImageRef = storageRef(stg, `profile_pics/${imageName}.jpg`);
             const pngImageRef = storageRef(stg, `profile_pics/${imageName}.png`);
-
+console.log(`User Id is ${userID}`)
             try {
                 const jpgDownloadURL = await getDownloadURL(jpgImageRef);
                 return jpgDownloadURL; // Return the download URL if JPG image is found

@@ -33,10 +33,10 @@ const Post = () => {
 
     const fetchUserName = async () => {
         try {
-            const user = FIREBASE_AUTH.currentUser;
+            const user = auth.currentUser;
             if (user) {
                 const userId = user.uid;
-                const snapshot = await get(ref(FIREBASE_DB, `users/${userId}/username`));
+                const snapshot = await get(ref(db, `users/${userId}/username`));
                 const fetchedUserName = snapshot.val();
                 if (fetchedUserName) {
                     setUserName(fetchedUserName); // Set the fetched username in the state
@@ -73,17 +73,18 @@ const Post = () => {
             }
     
             // Fetch the current user ID
-            const userId = FIREBASE_AUTH.currentUser.uid;
+            const userId = auth.currentUser.uid;
     
-            // Fetch the current post number from the database
-            const postNumberSnapshot = await get(ref(db, `users/${userId}/postNumber`));
-            let postNumber = postNumberSnapshot.val() || 0; // If postNumberSnapshot is null, default to 0
+            // Fetch the current post numbers array from the database
+            const postNumbersSnapshot = await get(ref(db, `users/${userId}/postNumbers`));
+            let postNumbers = postNumbersSnapshot.val() || []; // If no post numbers exist, default to an empty array
     
             // Increment the post number
-            postNumber++;
+            const postNumber = postNumbers.length + 1;
+            postNumbers.push(postNumber);
     
-            // Write the updated post number back to the database
-            await set(ref(db, `users/${userId}/postNumber`), postNumber);
+            // Write the updated post numbers array back to the database
+            await set(ref(db, `users/${userId}/postNumbers`), postNumbers);
     
             // Use the incremented post number as part of the post name
             const postName = `post_${postNumber}`;
@@ -105,15 +106,18 @@ const Post = () => {
             const downloadURL = await getDownloadURL(imageRef);
             console.log('Download URL:', downloadURL);
             const timestamp = Date.now();
-
+    
             // Call writeUserData with all required parameters
-            writeUserData(userId, userName, years, days, hours, minutes, postName,timestamp,encMessage);
+            writeUserData(userId, userName, years, days, hours, minutes, postName, timestamp, encMessage);
+    
+            // Reset input fields and selected image
             setSelectedImage(null);
             setYears('');
             setDays('');
             setHours('');
             setMinutes('');
-            setEncMessage(''); } catch (error) {
+            setEncMessage('');
+        } catch (error) {
             console.error('Error uploading image:', error);
         }
     };
@@ -185,6 +189,7 @@ const Post = () => {
                             onChangeText={(text) => setHours(text)}
                             keyboardType="numeric"
                         />
+                        
                         <TextInput
                             value={minutes}
                             style={styles.input}
@@ -195,7 +200,7 @@ const Post = () => {
                             fontWeight={'bold'}
                         />
                     </View>
-                    <Text style={styles.buttonText}>Time</Text>
+                    <Text style={styles.buttonText}>Enter The Duration Of Encapsulation</Text>
                 </View>
                 <View style={styles.button2}>
                 <TextInput 
@@ -209,7 +214,7 @@ const Post = () => {
                 </View>
                 <View style={styles.button}>
                     <TouchableOpacity onPress={uploadImageToStorage}>
-                        <Text style={styles.buttonText}>Send Capsule To Comunity </Text>
+                        <Text style={styles.buttonText}>Send Capsule To Community </Text>
                     </TouchableOpacity>
                 </View>
             </View>
