@@ -4,6 +4,7 @@ import { ref, get } from 'firebase/database';
 import { FIREBASE_AUTH,FIREBASE_DB,FIREBASE_STG } from '../fireBaseConfig';
 import { ref as storageRef, getDownloadURL } from 'firebase/storage'; 
 import { ScrollView } from 'react-native-gesture-handler';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const Community = () => {
     const [users, setUsers] = useState([]);
@@ -77,30 +78,34 @@ const Community = () => {
       }
     
   };
-    
-      return (
-        <ScrollView style={styles.scrollView}>
-        <View style={styles.container}>
-          {/* Display images for each user */}
-          {users.map(user => (
-            <View key={user.userId} style={styles.userContainer}>
-              <TouchableOpacity 
-              style={styles.userTouchable}
-            //   onPress={() => this.props.navigation.navigate('Message')}
-              >
-              {imageURL[user.userId] ? (
-                  renderUserImage(user, imageURL[user.userId])
-                ) : (
-                  <Text>No image found</Text>
-                )}
-                <Text style={styles.username}>{user.username}</Text>
+  
+  const renderChatIcon = () => {
+    return (
+    <TouchableOpacity onPress={() => { /* Handle chat icon press here */ }}>
+    <MaterialCommunityIcons name="message-text" size={36} color="black" />
+    </TouchableOpacity>
+  );
+};
 
-              </TouchableOpacity>
+  return (
+    <ScrollView style={styles.scrollView}>
+      <View style={styles.container}>
+        {/* Display images and chat icons for each user */}
+        {users.map(user => (
+          <View key={user.userId} style={styles.userContainer}>
+            <View style={styles.nonSelectableContent}>
+              {imageURL[user.userId] ? (
+                renderUserImage(user, imageURL[user.userId])
+              ) : (
+                <Text>No image found</Text>
+              )}
+              <Text style={styles.username}>{user.username}</Text>
             </View>
-          ))}
-        </View>
-      </ScrollView>
-      
+            {renderChatIcon()}
+          </View>
+        ))}
+      </View>
+    </ScrollView>
       );
     };
   
@@ -116,34 +121,47 @@ const Community = () => {
     userContainer: {
         flexDirection: 'row', // Align children horizontally
         alignItems: 'center', // Center the content vertically
-        marginVertical: 10, // Adjust as needed
+        marginVertical: 10, 
         width:'80%',
         borderColor:'rgb(203, 174, 115)',
         borderWidth:3,
         padding:10,
         borderRadius:10
       },
-      userTouchable: {
-        flexDirection: 'row', // Align children horizontally
-        alignItems: 'center', // Center the content vertically
 
+      nonSelectableContent: {
+        flex: 1, // Make it take up remaining space
+        userSelect: 'none', // Disable selection for children
+        flexDirection: 'row', 
+        alignItems: 'center', 
+      },
+      
+      userTouchable: {
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        flex: 1,
       },
      
     profilePicture: {
       width: 60,
       height: 60,
       borderRadius: 35,
-      marginRight: 70,
-      
+      marginRight: 25,
     },
+    
     username: {
-      textAlign: 'left',
+      textAlign: 'center',
       fontSize: 24,
       fontWeight: 'bold',
       margin: 15
     },
-  
-   
+    
+    iconContainer: {
+      position: 'absolute', // Make icon absolute-positioned/static
+      right: 10, 
+      top: 12, 
+    },
+
   });
 
 export default Community;
