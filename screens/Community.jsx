@@ -3,7 +3,6 @@ import { View, Image, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ref, get } from 'firebase/database';
 import { FIREBASE_AUTH,FIREBASE_DB,FIREBASE_STG } from '../fireBaseConfig';
 import { ref as storageRef, getDownloadURL } from 'firebase/storage'; 
-import Message from './Message';
 import { ScrollView } from 'react-native-gesture-handler';
 
 const Community = () => {

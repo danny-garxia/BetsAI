@@ -18,9 +18,14 @@ const Post = () => {
     const [days, setDays] = useState('');
     const [hours, setHours] = useState('');
     const [minutes, setMinutes] = useState('');
+
+    const [notifYears, setNotifYears] = useState('');
+    const [notifDays, setNotifDays] = useState('');
+    const [notifMinutes, setNotifMinutes] = useState('');
+
     const [userName, setUserName] = useState('');
     const [encMessage, setEncMessage] = useState('');
-
+    const [decMessage, setDecMessage] = useState('');
     const navigation = useNavigation(); // Use useNavigation hook
 
     useEffect(() => {
@@ -107,7 +112,7 @@ const Post = () => {
             const timestamp = Date.now();
     
             // Call writeUserData with all required parameters
-            writeUserData(userId, userName, years, days, hours, minutes, postName, timestamp, encMessage);
+            writeUserData(userId, userName, years, days, hours, minutes, postName, timestamp,decMessage, encMessage,notifDays,notifMinutes,notifYears);
     
             // Reset input fields and selected image
             setSelectedImage(null);
@@ -116,13 +121,18 @@ const Post = () => {
             setHours('');
             setMinutes('');
             setEncMessage('');
+            setDecMessage('');
+            setNotifYears('');
+            setNotifDays('');
+            setNotifMinutes('');
+                 
         } catch (error) {
             console.error('Error uploading image:', error);
         }
     };
     
 
-    const writeUserData = (userId, username, years, days, hours, minutes, postName,timestamp,encMessage) => {
+    const writeUserData = (userId, username, years, days, hours, minutes, postName, timestamp, encMessage,decMessage, notifDays,notifMinutes,notifYears) => {
         const userData = {
             username: username,
             years: years,
@@ -132,7 +142,11 @@ const Post = () => {
             postName: postName, // Include postName data in the userData object
             userId: userId,
             timestamp: timestamp,
-            encMessage: encMessage
+            encMessage: encMessage,
+            decMessage: decMessage,
+            notifDays: notifDays,
+            notifMinutes: notifMinutes,
+            notifYears: notifYears
         };
     
         // Set user data in the Firebase Realtime Database under the "posts" table
@@ -191,7 +205,7 @@ const Post = () => {
                         
                         <TextInput
                             value={minutes}
-                            style={styles.input}
+                            style={styles.inputMessage}
                             placeholderTextColor={'black'}
                             placeholder="Minutes"
                             onChangeText={(text) => setMinutes(text)}
@@ -199,24 +213,74 @@ const Post = () => {
                             fontWeight={'bold'}
                         />
                     </View>
-                    <Text style={styles.buttonText}>Enter The Duration Of Encapsulation</Text>
+                    <Text style={styles.buttonText}>Encapsulating For {`${minutes}`} Minutes | {`${days}`} Days | {`${hours}`} hours | {`${years}`} Years</Text>
                 </View>
-                <View style={styles.button2}>
+                <View style={styles.button3}>
                 <TextInput 
-                style={styles.input}
+                style={styles.inputMessage2}
                      value={encMessage}
-                     placeholder="Create Hidden Message"
-                     placeholderTextColor={'black'}
+                     placeholder="Write Hidden Message"
+                     placeholderTextColor={'white'}
                      fontWeight={'bold'}
                      onChangeText={(text)=>setEncMessage(text)}
                        />
                 </View>
+                <View style={styles.button2}>
+                <TextInput 
+                style={styles.inputMessage}
+                     value={decMessage}
+                     placeholder="Write Public Message"
+                     placeholderTextColor={'black'}
+                     fontWeight={'bold'}
+                     onChangeText={(text)=>setDecMessage(text)}
+                       />
+                </View>
+                
+
+                <View style={styles.button3}>
+                    <View style={styles.inputContainer}>
+                    <TextInput
+                            value={notifMinutes}
+                            style={styles.inputMessage2}
+                            placeholderTextColor={'white'}
+                            placeholder="Minutes"
+                            onChangeText={(text) => setNotifMinutes(text)}
+                            keyboardType="numeric"
+                            fontWeight={'bold'}
+                        />
+                        <TextInput
+                            value={notifDays}
+                            placeholderTextColor={'white'}
+                            fontWeight={'bold'}
+                            style={styles.inputMessage2}
+                            placeholder="Days"
+                            onChangeText={(text) => setNotifDays(text)}
+                            keyboardType="numeric"
+                        />
+
+                        <TextInput
+                            value={notifYears}
+                            style={styles.inputMessage2}
+                            placeholder="Hours"
+                            placeholderTextColor={'white'}
+                            fontWeight={'bold'}
+                            onChangeText={(text) => setNotifYears(text)}
+                            keyboardType="numeric"
+                        />
+                        
+                   
+                    </View>
+                    <Text style={styles.buttonText2}>Notify Me {`${notifMinutes}`} Minutes | {`${notifDays}`} Days | {`${notifYears}`} Years  Before Capsule Opens</Text>
+                </View>
+
+
                 <View style={styles.button}>
                     <TouchableOpacity onPress={uploadImageToStorage}>
                         <Text style={styles.buttonText}>Send Capsule To Community </Text>
                     </TouchableOpacity>
                 </View>
-            </View>
+                </View>
+
         </ScrollView>
     );
 };
@@ -249,10 +313,20 @@ const styles = StyleSheet.create({
         borderColor: '#cbae73', 
         borderWidth: 4,
     },
+    button3: {
+        marginTop: 10,
+        width: '80%',
+        padding: 10,
+        alignItems: 'center',
+        borderRadius: 9,
+        borderColor: '#cbae73', 
+        borderWidth: 4,
+        backgroundColor:'black'
+    },
     imageContainer: {
         alignItems: 'center', // Center the content horizontally
         width: '100%',
-        marginTop: '50%'
+        marginTop: '50%',
     },
     buttonWithImage: {
         backgroundColor: 'transparent', // No background color
@@ -266,14 +340,36 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: 'black'
     },
+    buttonText2:{
+        textAlign:'center',
+        fontWeight: 'bold',
+        fontSize: 15,
+        color: 'white'
+    },
     inputContainer: {
         flexDirection: 'row', // Change from 'column' to 'row'
         marginBottom: 20,
-        marginLeft: 10
+        marginLeft: 10,
+        
     },
     input: {
-        paddingHorizontal: 10,
+        textAlign:'center',
+        paddingHorizontal: 9,
         marginRight: 10,
-    }
+        borderRightColor:'rgb(203, 174, 115)',
+        borderRightWidth:1
+    },
+    
+    inputMessage: {
+        marginRight: 10,
+        
+    },
+    inputMessage2: {
+        marginRight: 10,
+        color:'white'
+        
+    },
+    
+    
 });
 export default Post;
