@@ -2,10 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity } from 'react-native';
 import { collection, onSnapshot, query, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import { FIREBASE_STR, FIREBASE_AUTH } from '../fireBaseConfig';
-//import firebase from 'firebase/app';
-//import { useAuthState } from 'react-firebase-hooks/auth';
-//import { useCollectionData } from 'react-firebase-hooks/firestore';
-
 
 const Message = () => {
     const fbStre = FIREBASE_STR;

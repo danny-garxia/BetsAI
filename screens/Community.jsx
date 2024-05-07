@@ -6,7 +6,7 @@ import { ref as storageRef, getDownloadURL } from 'firebase/storage';
 import { ScrollView } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-const Community = () => {
+const Community = ({ navigation }) => {
     const [users, setUsers] = useState([]);
     const [imageURL, setImageURL] = useState({});
   
@@ -78,10 +78,10 @@ const Community = () => {
       }
     
   };
-  
-  const renderChatIcon = () => {
+
+  const renderChatIcon = (userId) => {
     return (
-    <TouchableOpacity onPress={() => { /* Handle chat icon press here */ }}>
+    <TouchableOpacity onPress={() => { navigation.navigate('Chat', { userId })}}>
     <MaterialCommunityIcons name="message-text" size={36} color="black" />
     </TouchableOpacity>
   );
@@ -101,7 +101,7 @@ const Community = () => {
               )}
               <Text style={styles.username}>{user.username}</Text>
             </View>
-            {renderChatIcon()}
+            {renderChatIcon(user.userId)}
           </View>
         ))}
       </View>
