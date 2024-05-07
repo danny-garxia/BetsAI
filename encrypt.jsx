@@ -1,181 +1,165 @@
 import React, { useState, useEffect } from 'react';
-import { View, Image, Text, StyleSheet, Button } from 'react-native';
+import { View, Image, Text, StyleSheet, ScrollView } from 'react-native';
 import { ref, get } from 'firebase/database';
-import { ref as storageRef, getDownloadURL } from 'firebase/storage'; // Import storageRef and getDownloadURL from Firebase Storage
+import { ref as storageRef, getDownloadURL } from 'firebase/storage';
 import { FIREBASE_DB } from './fireBaseConfig';
 import { FIREBASE_STG } from './fireBaseConfig';
 import staticImage from './imgs/static.jpg';
-import { ScrollView } from 'react-native-gesture-handler';
-import { ALERT_TYPE, Dialog, AlertNotificationRoot, Toast } from 'react-native-alert-notification';
-
 
 const EncryptImage = () => {
   const [users, setUsers] = useState([]);
   const [imageURL, setImageURL] = useState({});
   const [currentTime, setCurrentTime] = useState(new Date().getTime());
-
+  const [alertDisplayed, setAlertDisplayed] = useState(false); // New state for tracking alert display
   const db = FIREBASE_DB;
   const stg = FIREBASE_STG;
+
   useEffect(() => {
     fetchUserData();
-    generateEncryptionKey();
-    
-    // Update currentTime every second
     const intervalId = setInterval(() => {
       setCurrentTime(new Date().getTime());
     }, 1000);
-
-    // Cleanup function to clear the interval
     return () => clearInterval(intervalId);
   }, [imageURL]);
 
+  useEffect(() => {
+    // Check if alert should be displayed
+    users.forEach(user => {
+      const threshold = 10000; // 10 seconds threshold
 
-    const fetchUserData = async () => {
-      try {
-        const usersList = await getUsersList();
-        setUsers(usersList);
-        await fetchAndSetImageURLs(usersList);
-          } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
-    
-    const getUsersList = async () => {
-      const usersRef = ref(FIREBASE_DB, 'posts');
-      const usersSnapshot = await get(usersRef);
-      const usersList = [];
-      usersSnapshot.forEach((childSnapshot) => {
-        const userData = childSnapshot.val();
-        usersList.push(userData);
-      });
-      return usersList;
-    };
-    const fetchAndSetImageURLs = async (usersList) => {
-      const imageUrls = {}; // Object to store image URLs
-    
-       await Promise.all(usersList.map(async (user) => {
-      const imageURL = await fetchUploadedImage(user.userId, user.postName);
-       imageUrls[`${user.userId}_${user.postName}`] = imageURL; // Store the imageURL directly in the imageUrls object
-       }));
-    
-
-      usersList.forEach(user => {
-        setImageURL(imageUrls);
-        generateEncryptionKey(user.userId, user.minutes, user.hours, user.years, user.days, user.timestamp);
-      });
-    
-    };
-    
+      const expirationTimestamp = user.timestamp + generateEncryptionKey(user.userId, user.minutes, user.hours, user.days, user.years);
+      const notofTimestamp = (expirationTimestamp - generateNotifiKey(user.userId, user.notifMinutes, user.notifDays, user.notifYears));
+      
+      console.log("Current time:", currentTime);
+      console.log("Notification timestamp:", notofTimestamp);
+      console.log("Expiration timestamp:", expirationTimestamp);
   
-const fetchUploadedImage = async (userId, postName) => {
-  try {
-    const imageName = `${userId}_${postName}`;
-    const imagePath = `User_Posts/${imageName}_image`;
-    const jpgImageRef = storageRef(stg, `${imagePath}.jpg`);
-    const pngImageRef = storageRef(stg, `${imagePath}.png`);
+      if (Math.abs(currentTime - notofTimestamp) <= threshold && !alertDisplayed) {
+        console.log(`${user.username} Capsule will open in ${user.notifMinutes} minutes | ${user.notifDays} days | ${user.notifYears} Years`);
+        alert(`${user.username} Capsule will open in ${user.notifMinutes} minutes | ${user.notifDays} days | ${user.notifYears} Years`);
+        setAlertDisplayed(true);
+      }
 
-    const [jpgDownloadURL, pngDownloadURL] = await Promise.all([
-      getDownloadURL(jpgImageRef).catch(error => null),
-      getDownloadURL(pngImageRef).catch(error => null)
-    ]);
+      if (Math.abs(currentTime - expirationTimestamp) <= threshold && !alertDisplayed) {
+        console.log(`${user.username} Capsule is about to open`);
+        alert(`${user.username} Capsule is about to open`);
+        setAlertDisplayed(true);
+      }
+    });
+  }, [users, currentTime, alertDisplayed]);
 
-    return jpgDownloadURL || pngDownloadURL; // Return the first available URL
-  } catch (error) {
-    console.error('Error fetching post image:', error);
-    return null;
-  }
-};
+  const fetchUserData = async () => {
+    try {
+      const usersList = await getUsersList();
+      setUsers(usersList);
+      await fetchAndSetImageURLs(usersList);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
 
+  const getUsersList = async () => {
+    const usersRef = ref(FIREBASE_DB, 'posts');
+    const usersSnapshot = await get(usersRef);
+    const usersList = [];
+    usersSnapshot.forEach((childSnapshot) => {
+      const userData = childSnapshot.val();
+      usersList.push(userData);
+    });
+    return usersList;
+  };
 
-    const generateEncryptionKey = (userId, minutes, hours, days, years,timestamp) => {
-      let durationMilliseconds = 0;
-      durationMilliseconds += minutes * 60 * 1000; // Convert minutes to milliseconds
-      durationMilliseconds += hours * 60 * 60 * 1000; // Convert hours to milliseconds
-      durationMilliseconds += days * 24 * 60 * 60 * 1000; // Convert days to milliseconds
-      durationMilliseconds += years * 365 * 24 * 60 * 60 * 1000; // Convert years to milliseconds
-      const expirationTimestamp = durationMilliseconds;
-      return expirationTimestamp;
-    };
-    
+  const fetchAndSetImageURLs = async (usersList) => {
+    const imageUrls = {};
+    await Promise.all(usersList.map(async (user) => {
+      const imageURL = await fetchUploadedImage(user.userId, user.postName);
+      imageUrls[`${user.userId}_${user.postName}`] = imageURL;
+    }));
+    setImageURL(imageUrls);
+  };
 
-//   
+  const fetchUploadedImage = async (userId, postName) => {
+    try {
+      const imageName = `${userId}_${postName}`;
+      const imagePath = `User_Posts/${imageName}_image`;
+      const jpgImageRef = storageRef(stg, `${imagePath}.jpg`);
+      const pngImageRef = storageRef(stg, `${imagePath}.png`);
 
+      const [jpgDownloadURL, pngDownloadURL] = await Promise.all([
+        getDownloadURL(jpgImageRef).catch(error => null),
+        getDownloadURL(pngImageRef).catch(error => null)
+      ]);
 
-const renderUserImage = (user) => {
-  const currentTime = new Date().getTime();
-  const expirationTimestamp = user.timestamp + generateEncryptionKey(user.userId, user.minutes, user.hours, user.days, user.years);
+      return jpgDownloadURL || pngDownloadURL;
+    } catch (error) {
+      console.error('Error fetching post image:', error);
+      return null;
+    }
+  };
 
-  const displayTime = expirationTimestamp-currentTime;
-  // Convert milliseconds to minutes
+  const generateEncryptionKey = (userId, minutes, hours, days, years) => {
+    let durationMilliseconds = 0;
+    durationMilliseconds += minutes * 60 * 1000; // Convert minutes to milliseconds
+    durationMilliseconds += hours * 60 * 60 * 1000; // Convert hours to milliseconds
+    durationMilliseconds += days * 24 * 60 * 60 * 1000; // Convert days to milliseconds
+    durationMilliseconds += years * 365 * 24 * 60 * 60 * 1000; // Convert years to milliseconds
+    return durationMilliseconds;
+  };
+
+  const generateNotifiKey = (userId, notifMinutes, notifDays, notifYears) => {
+    let notDurationMilliseconds = 0;
+    notDurationMilliseconds += notifMinutes * 60 * 1000; // Convert minutes to milliseconds
+    notDurationMilliseconds += notifDays * 24 * 60 * 60 * 1000; // Convert days to milliseconds
+    notDurationMilliseconds += notifYears * 365 * 24 * 60 * 60 * 1000; // Convert hours to milliseconds
+    return notDurationMilliseconds;
+  };
+
+  const renderUserImage = (user) => {
+    const displayTime = user.timestamp + generateEncryptionKey(user.userId, user.minutes, user.hours, user.days, user.years) - currentTime;
     const disMinutes = Math.floor(displayTime / (1000 * 60));
-
-    // Convert milliseconds to days
     const disDays = Math.floor(displayTime / (1000 * 60 * 60 * 24));
-
     const disHours = Math.floor(displayTime / (1000 * 60 * 60));
-
-    // Convert milliseconds to years
     const disYears = Math.floor(disDays / 365);
-
-    // Calculate remaining days after subtracting years
     const disRemainingDays = disDays % 365;
 
-  if (currentTime < expirationTimestamp) {
-    // Show the default image for the user
-    return (
-      <>
-      <Image source={staticImage} style={{ width: 300, height: 300 }} />
-      <Text style={styles.message}>Capsule locked for {`${disMinutes}`} minutes | {`${disDays}`} days | {`${disHours}`} | {`${disRemainingDays}`} Days | {`${disYears}`}  Years</Text>
-      </>
-    );
-  } 
-  else if(currentTime === expirationTimestamp){
-    <Button
-    title={'Past Gifts '}
-    onPress={() =>
-      Toast.show({
-        type: ALERT_TYPE.SUCCESS,
-        title: 'Past Gifts Capsule',
-        textBody: `${user.username} Capsule wil now open`,
-      })
-    }
-  />
-  }
-  
-  else {
-    // Show the main image specified by the user
-    const imageUrl = imageURL[`${user.userId}_${user.postName}`];
-
-    if (imageUrl) {
+    if (currentTime < user.timestamp + generateEncryptionKey(user.userId, user.minutes, user.hours, user.days, user.years)) {
       return (
         <>
-          <Image source={{ uri: imageUrl }} style={{ width: 300, height: 300 }} />
-          <Text style={styles.message}>Message From {`${user.username}`} |  {`${user.encMessage}`}</Text> 
+          <Image source={staticImage} style={{ width: 300, height: 300 }} />
+          <Text style={styles.message}>Capsule locked for {`${disMinutes}`} minutes | {`${disDays}`} days | {`${disHours}`} | {`${disRemainingDays}`} Days | {`${disYears}`}  Years</Text>
         </>
       );
     } else {
-      return <Text>No image found</Text>;
+      const imageUrl = imageURL[`${user.userId}_${user.postName}`];
+      if (imageUrl) {
+        return (
+          <>
+            <Image source={{ uri: imageUrl }} style={{ width: 300, height: 300 }} />
+            <Text style={styles.message}>Message From {`${user.username}`} |  {`${user.encMessage}`}</Text>
+          </>
+        );
+      } else {
+        return <Text>No image found</Text>;
+      }
     }
-  }
-};
-  
-    return (
-      <ScrollView style={styles.scrollView}>
+  };
+
+  return (
+    <ScrollView style={styles.scrollView}>
       <View style={styles.container}>
-        <Text style={styles.header}>Comiunity Capsules</Text>
-        {/* Display images for each user */}
+        <Text style={styles.header}>Community Capsules</Text>
         {users.map(user => (
           <View key={user.userId}>
-            <Text style ={styles.username}>{user.username}</Text>
+            <Text style={styles.username}>{user.username}</Text>
             {imageURL[`${user.userId}_${user.postName}`] ? (
-            renderUserImage(user, imageURL)) : (
+              renderUserImage(user)) : (
               <Text>No image found</Text>)}
           </View>
         ))}
       </View>
-      </ScrollView>
-    );
-  };
+    </ScrollView>
+  );
+};
 
 const styles = StyleSheet.create({
   scrollView: {
@@ -187,37 +171,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  userItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  profilePicture: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 20,
-  },
   username: {
     textAlign: 'center',
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom:15
+    marginBottom: 15
   },
-  header:{
-    textAlign: 'center', 
+  header: {
+    textAlign: 'center',
     fontSize: 22,
     fontWeight: 'bold',
-    marginBottom:40
+    marginBottom: 40
   },
-  message:{
+  message: {
     marginTop: 15,
     fontSize: 15,
     fontWeight: 'bold',
-    marginBottom:40
+    marginBottom: 40
   }
 });
 

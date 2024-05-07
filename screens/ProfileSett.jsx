@@ -10,12 +10,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { FIREBASE_DB } from '../fireBaseConfig';
 import { FIREBASE_STG } from '../fireBaseConfig';
 
-interface RouterProps {
-    navigation: NavigationProp<any, any>;
-}
 
 
-const ProfileSett = ({ navigation }: RouterProps) => {
+const ProfileSett = () => {
     const [profilePictureUrl, setProfilePictureUrl] = useState('');
     const [userName, setUserName] = useState('');
 
@@ -78,47 +75,44 @@ const ProfileSett = ({ navigation }: RouterProps) => {
     
     
 
-    const pickImage = async () => {
-        try {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') {
-                alert('Sorry, we need camera roll permissions to make this work!');
-                return;
-            }
+    // const pickImage = async () => {
+    //     try {
+    //         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    //         if (status !== 'granted') {
+    //             alert('Sorry, we need camera roll permissions to make this work!');
+    //             return;
+    //         }
 
-            const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: [1, 1],
-                quality: 1,
-            });
+    //         const result = await ImagePicker.launchImageLibraryAsync({
+    //             mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    //             allowsEditing: true,
+    //             aspect: [1, 1],
+    //             quality: 1,
+    //         });
 
-            if (!result.cancelled) {
-                const userId = 'the_user_id'; // Replace with the actual user ID
-                const response = await fetch(result.uri);
-                const blob = await response.blob();
-                const storageRef = storageRef(FIREBASE_STG).child(`profilePictures/${userId}_profile_image.png`);
-                await storageRef.put(blob);
-                const downloadURL = await storageRef.getDownloadURL();
-                await ref(FIREBASE_DB, `users/${userId}/profilePictureUrl`).set(downloadURL);
-                setProfilePictureUrl(downloadURL);
-            }
-        } catch (error) {
-            console.error('Error picking image:', error);
-        }
-    };
+    //         if (!result.cancelled) {
+    //             const userId = 'the_user_id'; // Replace with the actual user ID
+    //             const response = await fetch(result.uri);
+    //             const blob = await response.blob();
+    //             const storageRef = storageRef(FIREBASE_STG).child(`profilePictures/${userId}_profile_image.png`);
+    //             await storageRef.put(blob);
+    //             const downloadURL = await storageRef.getDownloadURL();
+    //             await ref(FIREBASE_DB, `users/${userId}/profilePictureUrl`).set(downloadURL);
+    //             setProfilePictureUrl(downloadURL);
+    //         }
+    //     } catch (error) {
+    //         console.error('Error picking image:', error);
+    //     }
+    // };
 
     return (
         <SafeAreaView style={styles.SafeAC}>
             <View style={styles.container}>
-                <Pressable style={styles.GoBack} onPress={() => navigation.goBack()}>
-                    <MaterialIcons name="arrow-back" size={24} color="black" />
-                </Pressable>
+             
                 <Text style={styles.text1}>Profile Settings</Text>
             </View>
             <ScrollView>
                 <View style={styles.container}>
-                    <TouchableOpacity onPress={pickImage}>
                         <Image
                             source={{ uri: profilePictureUrl }}
                             style={{
@@ -139,7 +133,6 @@ const ProfileSett = ({ navigation }: RouterProps) => {
                                 name='photo-camera'
                                 size={20} />
                         </View>
-                    </TouchableOpacity>
                 </View>
                 <View style={{
                     flexDirection: "column",
@@ -156,10 +149,11 @@ const ProfileSett = ({ navigation }: RouterProps) => {
                         justifyContent: 'center',
                         paddingLeft: 8,
                     }}>
-                        <TextInput
+                        {/* <TextInput
                             value={userName}
                             onChangeText={setUserName}
-                        />
+                        /> */}
+                        <Text style={styles.nameTxt} >{`${userName}`}</Text>
                     </View>
                     <Pressable style={styles.Button1} onPress={() => FIREBASE_AUTH.signOut()} >
                         <Text style={styles.buttonText}>Log out</Text>
@@ -190,17 +184,18 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 22,
     },
-    GoBack: {
-
-    },
     text1: {
         marginHorizontal: 10,
         paddingTop: 3,
         alignContent: "center",
     },
     SettingText: {
-        fontSize: 10,
+        fontSize: 15,
         fontWeight: 'bold'
+    },
+    nameTxt:{
+        fontSize: 10,
+
     }
 });
 export default ProfileSett;
