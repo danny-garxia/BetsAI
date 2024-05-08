@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons'; // Assuming you are using Expo fo
 import ProfileSett from '../screens/ProfileSett';
 import Post from '../screens/Post';
 import EncryptImage from '../encrypt';
-import Message from '../screens/Message';
+import Message from '../screens/Messages';
 import Community from '../screens/Community';
 const Tab = createBottomTabNavigator();
 
@@ -33,10 +33,10 @@ const AppNav = () => {
             />
     
             <Tab.Screen
-                name="Message"
+                name="Messages"
                 component={Message}
                 options={{
-                    tabBarLabel: 'Message',
+                    tabBarLabel: 'Messages',
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="chatbubbles-outline" color={color} size={size} />
                     ),

@@ -9,9 +9,10 @@ import { FIREBASE_AUTH } from './fireBaseConfig';
 import SignUpNav from './Navigators/SignUpNav';
 import AppNav from './Navigators/AppNavigator';
 import{createBottomTabNavigator} from '@react-navigation/bottom-tabs'
-
+import Community from './screens/Community';
+import Chat from './screens/Chat'; 
 const Stack = createStackNavigator();
-const InsideStack = createStackNavigator();
+//const InsideStack = createStackNavigator();
 
 
 function App() {
@@ -35,6 +36,9 @@ function App() {
                 ) : (
                     <Stack.Screen name="LogIn" component={SignUpNav} options={{ headerShown: false }} /> 
                 )}
+
+                <Stack.Screen name="Community" component={Community} />
+                <Stack.Screen name="Chat" component={Chat} />
             </Stack.Navigator>
 
         </NavigationContainer>
