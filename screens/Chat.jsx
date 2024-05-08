@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useCallback } from 'react';
+import { GiftedChat } from 'react-native-gifted-chat';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
-import { ref, child, onValue, push, set } from 'firebase/database'; // Firebase imports
-import { FIREBASE_DB } from '../fireBaseConfig'; // Assuming your config file
+import { collection, addDoc, orderBy, query, onSnapshot } from 'firebase/firestore'; // Firebase imports
+import { auth, database } from '../config/firebase'; // Assuming your config file
 
-const Chat = ({ route }) => {
-  /*const { userId } = route.params; // Get userId from navigation params
+/*const Chat = ({ route }) => {
+  const { userId } = route.params; // Get userId from navigation params
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
 
@@ -58,8 +59,57 @@ const Chat = ({ route }) => {
         </TouchableOpacity>
       </View>
     </View>
-  );*/
-};
+  );
+};*/
+
+export default function Chat() {
+  const [messages, setMessages] = useState([]);
+
+  useEffect(() => {
+    const collectionRef = collection(database, 'chats');
+    const q = query(collectionRef, orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(q, querySnapshot => {
+      setMessages(
+        querySnapshot.docs.map(doc => ({
+          _id: doc.data()._id,
+          createdAt: doc.data().createdAt.toDate(),
+          text: doc.data().text,
+          user: doc.data().user
+        }))
+      );
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+
+const onSend = useCallback((messages = []) => {
+    setMessages(previousMessages =>
+      GiftedChat.append(previousMessages, messages)
+    );
+    const { _id, createdAt, text, user } = messages[0];    
+    addDoc(collection(database, 'chats'), {
+      _id,
+      createdAt,
+      text,
+      user
+    });
+  }, []);
+  return (
+    <GiftedChat 
+    messages={messages}
+    showAvatarForEveryMessage={true}
+    onSend={messages => onSend(messages)}
+    user={{
+      _id: auth?.currentUser?.email,
+      avatar: ''
+    }} 
+    
+    
+    />
+  )
+}
 
 const styles = StyleSheet.create({
     container: {
@@ -99,4 +149,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default Chat;
+//export default Chat;
